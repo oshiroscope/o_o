@@ -1,0 +1,1 @@
+worker: python o_o.py

@@ -8,6 +8,10 @@ import os
 # config_file = open("config.json", "r")
 # config = json.load(config_file)
 
+if os.path.isfile('.env'):
+    from dotenv import load_dotenv
+    load_dotenv()
+
 DISCORD_BOT_TOKEN = os.environ['DISCORD_BOT_TOKEN']
 DISCORD_GUILD_ID = os.environ['DISCORD_GUILD_ID']
 NOTION_API_KEY = os.environ['NOTION_API_KEY']
@@ -79,6 +83,5 @@ async def notion(
         message = ("例外起きて草。なんも分からん。\n " + page_url,)
 
     await ctx.respond(message)
-
 
 bot.run(DISCORD_BOT_TOKEN)

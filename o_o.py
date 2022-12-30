@@ -3,20 +3,24 @@ from discord.commands import Option
 import requests
 import json
 import datetime
+import os
 
+# config_file = open("config.json", "r")
+# config = json.load(config_file)
 
-config_file = open("config.json", "r")
-config = json.load(config_file)
+DISCORD_BOT_TOKEN = os.environ['DISCORD_BOT_TOKEN']
+DISCORD_GUILD_ID = os.environ['DISCORD_GUILD_ID']
+NOTION_API_KEY = os.environ['NOTION_API_KEY']
+NOTION_DATABASE_ID = os.environ['NOTION_DATABASE_ID']
 
 bot = discord.Bot()
 
-
-@bot.slash_command(guild_ids=[config["discord_guild_id"]])
+@bot.slash_command(guild_ids=[DISCORD_GUILD_ID])
 async def ping(ctx):
     await ctx.respond("pong")
 
 
-@bot.slash_command(guild_ids=[config["discord_guild_id"]])
+@bot.slash_command(guild_ids=[DISCORD_GUILD_ID])
 async def hello(
     ctx,
     name: Option(str, "名前を入力してください"),
@@ -26,7 +30,7 @@ async def hello(
     await ctx.respond(f"こんにちは、{name}さん")
 
 
-@bot.slash_command(guild_ids=[config["discord_guild_id"]])
+@bot.slash_command(guild_ids=[DISCORD_GUILD_ID])
 async def notion(
     ctx,
     name: Option(str, "名前を入力してください"),
@@ -34,9 +38,9 @@ async def notion(
 
     url = "https://api.notion.com/v1/pages"
 
-    print("notion_api_key" + config["notion_api_key"])
-    api_key = config["notion_api_key"]
-    database_id = config["notion_database_id"]
+    print("notion_api_key" + NOTION_API_KEY)
+    api_key = NOTION_API_KEY
+    database_id = NOTION_DATABASE_ID
     emoji = "🤠"
     headers = {
         "Accept": "application/json",
@@ -77,4 +81,4 @@ async def notion(
     await ctx.respond(message)
 
 
-bot.run(config["discord_bot_token"])
+bot.run(DISCORD_BOT_TOKEN)

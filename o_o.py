@@ -37,7 +37,7 @@ async def hello(
 @bot.slash_command(guild_ids=[DISCORD_GUILD_ID])
 async def notion(
     ctx,
-    name: Option(str, "名前を入力してください"),
+    title: Option(str, "名前を入力してください"),
 ):
 
     url = "https://api.notion.com/v1/pages"

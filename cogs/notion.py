@@ -38,27 +38,25 @@ class Notion(commands.Cog):
                         }
                     ],
                 },
-            },
-            
-            "children":[
-            {
-                "object": 'block',
-                "type": "bookmark",
-                "bookmark": {
-                    "url": url
+                "Project": {
+                    "relation": [
+                        {
+                            "id": "1f124bc8-0c0e-4c11-8da3-63cbc5fa1497"
+                        }
+                    ],
+                    "has_more": False
                 }
-            },]
-    #         "children":[
-    #             {
-    #                 "rich_text": [
-    #                         {
-    #                              "text": {
-    #                                 "content": content,
-    #                                 "link": url
-    #                                 }}
-    #                             ],
-    #             },       
-    #    ],
+            },
+            "children":
+            [
+                {
+                    "object": 'block',
+                    "type": "bookmark",
+                    "bookmark": {
+                        "url": url
+                    }
+                },
+            ]
         }
 
         response = requests.post(self.NOTION_API_URL, json=payload, headers=headers)
@@ -81,6 +79,18 @@ class Notion(commands.Cog):
     async def inbox(self, interaction: discord.Interaction, title: str) -> None:
         message = self.post_inbox(title)
         await interaction.response.send_message(message)
+
+    @app_commands.command()
+    async def get_db(self, interaction: discord.Interaction) -> None:
+        # url = f"https://api.notion.com/v1/databases/{self.NOTION_DATABASE_ID}"
+        url = f"https://api.notion.com/v1/pages/c43646892163466ebfba427cd7225c1d"
+        headers = {
+            'Authorization': 'Bearer ' + self.NOTION_API_KEY,
+            "Notion-Version": "2022-06-28",
+        }
+        r = requests.get(url, headers=headers)
+        data = r.json()
+        print(data)
 
     @commands.Cog.listener(name='on_message')
     async def good_reaction(self, message: discord.Message):

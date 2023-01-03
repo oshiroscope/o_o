@@ -5,7 +5,7 @@ import os
 import requests
 import json
 
-class Notion(commands.Cog):
+class NotionManager(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         
@@ -105,4 +105,4 @@ class Notion(commands.Cog):
 
 async def setup(bot: commands.Bot) -> None:
     MY_GUILD = discord.Object(id=int(os.environ['DISCORD_GUILD_ID']))
-    await bot.add_cog(Notion(bot), guild=MY_GUILD) 
+    await bot.add_cog(NotionManager(bot), guild=MY_GUILD) 

@@ -9,7 +9,7 @@ import os
 import traceback
 
 cogslist = [
-    'cogs.notion'
+    'cogs.notion_manager'
 ]
 
 class o_o(commands.Bot):

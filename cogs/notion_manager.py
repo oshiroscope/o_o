@@ -5,28 +5,33 @@ import os
 import requests
 import json
 
-class NotionManager(commands.Cog):
-    def __init__(self, bot: commands.Bot) -> None:
-        self.bot = bot
-        
-    @commands.Cog.listener()
-    async def on_ready(self):       
+class NotionDB():
+    def __init__(self) -> None:
         # Notion setup
         self.NOTION_API_KEY = os.environ['NOTION_API_KEY']
         self.NOTION_DATABASE_ID = os.environ['NOTION_DATABASE_ID']
         self.NOTION_API_URL = "https://api.notion.com/v1/pages"
 
-        # Discord setup
-        self.DISCORD_INBOX_CHANNEL = self.bot.get_channel(int(os.environ['DISCORD_INBOX_CHANNEL_ID']))
-
-    def post_inbox(self, title: str, content='', url='', emoji='😐') -> str:
+    def post(self, payload) -> requests.Response:
         headers = {
             "Accept": "application/json",
             "Notion-Version": "2022-06-28",
             "Content-Type": "application/json",
             "Authorization": "Bearer " + self.NOTION_API_KEY,
         }
+        try:
+            response = requests.post(self.NOTION_API_URL, json=payload, headers=headers)
+        except Exception as e:
+            print(f'Exception: {e}')
+        return response
 
+    def add_child(self, payload: dict, child: dict) -> dict:
+        if 'children' not in payload:
+            payload['children'] = []
+        payload['children'].append(child)
+        return payload
+
+    def default(self, title: str, emoji='') -> dict:
         payload = {
             "parent": {"database_id": self.NOTION_DATABASE_ID},
             "icon": {"emoji": emoji},
@@ -36,37 +41,62 @@ class NotionManager(commands.Cog):
                         {
                             "text": {"content": title},
                         }
-                    ],
-                },
-                "Project": {
-                    "relation": [
-                        {
-                            "id": "1f124bc8-0c0e-4c11-8da3-63cbc5fa1497"
-                        }
-                    ],
-                    "has_more": False
+                    ]
                 }
             },
-            "children":
-            [
-                {
-                    "object": 'block',
-                    "type": "bookmark",
-                    "bookmark": {
-                        "url": url
-                    }
-                },
-            ]
+            "children": []
         }
+        return payload
 
-        response = requests.post(self.NOTION_API_URL, json=payload, headers=headers)
+    def set_project(self, payload: dict, id: str) -> dict:
+        payload['properties']['Project'] = {
+            'relation': [
+                {
+                    'id': id
+                }
+            ],
+            'has_more': False
+        }
+        return payload
+
+class NotionManager(commands.Cog):
+    def __init__(self, bot: commands.Bot) -> None:
+        self.bot = bot
+        
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.notion_db = NotionDB()
+        # Notion setup
+        self.NOTION_API_KEY = os.environ['NOTION_API_KEY']
+        self.NOTION_DATABASE_ID = os.environ['NOTION_DATABASE_ID']
+        self.NOTION_API_URL = "https://api.notion.com/v1/pages"
+
+        # Discord setup
+        self.DISCORD_INBOX_CHANNEL = self.bot.get_channel(int(os.environ['DISCORD_INBOX_CHANNEL_ID']))
+
+    def post_inbox(self, title: str, content='', url='', emoji='😐') -> str:
+        payload = self.notion_db.default(title, emoji=emoji)
+        payload = self.notion_db.set_project(payload, os.environ['NOTION_INBOX_PROJECTS_TAG_IT'])
+        payload = self.notion_db.add_child(payload,
+        {
+            "object": 'block',
+            "type": "bookmark",
+            "bookmark": 
+            {
+                "url": url
+            }
+        }
+        )
+
+        response = self.notion_db.post(payload)
+        # response = requests.post(self.NOTION_API_URL, json=payload, headers=headers)
         result_dict = response.json()
         result = result_dict["object"]
-        page_url = result_dict["url"]
-        page_title = result_dict["properties"]["Name"]["title"][0]["text"]["content"]
 
         message = ""
         if result == "page":
+            page_url = result_dict["url"]
+            page_title = result_dict["properties"]["Name"]["title"][0]["text"]["content"]
             message = "「" + page_title + "」が作成されたよ～ XXXX!!\n " + page_url
         elif result == "error":
             message = "なんかエラーが発生しているみたい！\n " + page_url

@@ -31,7 +31,7 @@ class NotionDB():
         payload['children'].append(child)
         return payload
 
-    def default(self, title: str, emoji='', link='') -> dict:
+    def default(self, title: str, emoji='') -> dict:
         payload = {
             "parent": {"database_id": self.NOTION_DATABASE_ID},
             "icon": {"emoji": emoji},
@@ -39,7 +39,7 @@ class NotionDB():
                 "Name": {
                     "title": [
                         {
-                            "text": {"content": f"{title} ({link})"},
+                            "text": {"content": f"{title}"},
                         }
                     ]
                 }
@@ -74,8 +74,8 @@ class NotionManager(commands.Cog):
         # Discord setup
         self.DISCORD_INBOX_CHANNEL = self.bot.get_channel(int(os.environ['DISCORD_INBOX_CHANNEL_ID']))
 
-    def post_inbox(self, title: str, content='', url='', emoji='😐', link='') -> str:
-        payload = self.notion_db.default(title, emoji=emoji, link=link)
+    def post_inbox(self, title: str, content='', url='', emoji='😐') -> str:
+        payload = self.notion_db.default(title, emoji=emoji)
         payload = self.notion_db.set_project(payload, os.environ['NOTION_INBOX_PROJECTS_TAG_IT'])
         payload = self.notion_db.add_child(payload,
         {
@@ -107,7 +107,10 @@ class NotionManager(commands.Cog):
 
     @app_commands.command()
     async def inbox(self, interaction: discord.Interaction, title: str) -> None:
-        message = self.post_inbox(title, link=interaction.message.jump_url)
+        channel = interaction.channel
+        interaction_id = interaction.id
+        url = f"https://discord.com/channels/{channel.guild.id}/{channel.id}/{interaction_id}"
+        message = self.post_inbox(title, url=url)
         await interaction.response.send_message(message)
 
     @app_commands.command()

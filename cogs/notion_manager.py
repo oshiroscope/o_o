@@ -20,22 +20,6 @@ class NotionDB():
 
         self.notion = Client(auth=os.environ["NOTION_API_KEY"])
 
-    def post(self, payload):
-        # headers = {
-        #     "Accept": "application/json",
-        #     "Notion-Version": "2022-06-28",
-        #     "Content-Type": "application/json",
-        #     "Authorization": "Bearer " + self.NOTION_API_KEY,
-        # }
-        # try:
-        #     response = requests.post(self.NOTION_API_URL, json=payload, headers=headers)
-        # except Exception as e:
-        #     print(f'Exception: {e}')
-        # return response
-    
-        created_page = self.notion.pages.create(parent={"database_id": self.NOTION_DATABASE_ID}, properties=payload["properties"])
-        return 
-
     # payload の末尾にコンテンツを追加する
     def add_child(self, payload: dict, child: dict) -> dict:
         if 'children' not in payload:

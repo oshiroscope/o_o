@@ -20,18 +20,21 @@ class NotionDB():
 
         self.notion = Client(auth=os.environ["NOTION_API_KEY"])
 
-    def post(self, payload) -> requests.Response:
-        headers = {
-            "Accept": "application/json",
-            "Notion-Version": "2022-06-28",
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + self.NOTION_API_KEY,
-        }
-        try:
-            response = requests.post(self.NOTION_API_URL, json=payload, headers=headers)
-        except Exception as e:
-            print(f'Exception: {e}')
-        return response
+    def post(self, payload):
+        # headers = {
+        #     "Accept": "application/json",
+        #     "Notion-Version": "2022-06-28",
+        #     "Content-Type": "application/json",
+        #     "Authorization": "Bearer " + self.NOTION_API_KEY,
+        # }
+        # try:
+        #     response = requests.post(self.NOTION_API_URL, json=payload, headers=headers)
+        # except Exception as e:
+        #     print(f'Exception: {e}')
+        # return response
+    
+        created_page = self.notion.pages.create(parent={"database_id": self.NOTION_DATABASE_ID}, properties=payload["properties"])
+        return 
 
     # payload の末尾にコンテンツを追加する
     def add_child(self, payload: dict, child: dict) -> dict:
@@ -57,18 +60,6 @@ class NotionDB():
         }
         return payload
 
-    # プロジェクトプロパティを編集
-    def set_project(self, payload: dict, id: str) -> dict:
-        payload['properties']['Project'] = {
-            'relation': [
-                {
-                    'id': id
-                }
-            ],
-            'has_more': False
-        }
-        return payload
-
     def query(self, filter):
         results = self.notion.databases.query(
             database_id=self.NOTION_DATABASE_ID,
@@ -83,17 +74,31 @@ class NotionManager(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.notion_db = NotionDB()
+
         # Notion setup
         self.NOTION_API_KEY = os.environ['NOTION_API_KEY']
         self.NOTION_DATABASE_ID = os.environ['NOTION_DATABASE_ID']
         self.NOTION_API_URL = "https://api.notion.com/v1/pages"
+        self.notion = Client(auth=os.environ["NOTION_API_KEY"])
 
         # Discord setup
         self.DISCORD_INBOX_CHANNEL = self.bot.get_channel(int(os.environ['DISCORD_INBOX_CHANNEL_ID']))
 
+    # プロジェクトプロパティを編集
+    def set_project(self, payload: dict, id: str) -> dict:
+        payload['properties']['Project'] = {
+            'relation': [
+                {
+                    'id': id
+                }
+            ],
+            'has_more': False
+        }
+        return payload
+
     def post_inbox(self, title: str, content='', url='', emoji='😐') -> str:
         payload = self.notion_db.default(title, emoji=emoji)
-        payload = self.notion_db.set_project(payload, os.environ['NOTION_INBOX_PROJECTS_TAG_IT'])
+        payload = self.set_project(payload, os.environ['NOTION_INBOX_PROJECTS_TAG_IT'])
         payload = self.notion_db.add_child(payload,
         {
             "object": 'block',
@@ -104,23 +109,10 @@ class NotionManager(commands.Cog):
             }
         }
         )
+        created_page = self.notion.pages.create(parent={"database_id": self.NOTION_DATABASE_ID}, properties=payload["properties"])
+        print(created_page)
+        return created_page
 
-        response = self.notion_db.post(payload)
-        # response = requests.post(self.NOTION_API_URL, json=payload, headers=headers)
-        result_dict = response.json()
-        result = result_dict["object"]
-
-        message = ""
-        if result == "page":
-            page_url = result_dict["url"]
-            page_title = result_dict["properties"]["Name"]["title"][0]["text"]["content"]
-            message = "「" + page_title + "」が作成されたよ～!!\n " + page_url
-        elif result == "error":
-            message = "なんかエラーが発生しているみたい！\n " + page_url
-        else:
-            message = ("例外起きて草。なんも分からん。\n " + page_url,)
-
-        return message
 
     @app_commands.command()
     async def inbox(self, interaction: discord.Interaction, title: str) -> None:
@@ -128,7 +120,7 @@ class NotionManager(commands.Cog):
         interaction_id = interaction.id
         url = f"https://discord.com/channels/{channel.guild.id}/{channel.id}/{interaction_id}"
         message = self.post_inbox(title, url=url)
-        await interaction.response.send_message(message)
+        await interaction.response.send_message("hogehoge!")
 
     @app_commands.command()
     async def get_db(self, interaction: discord.Interaction) -> None:

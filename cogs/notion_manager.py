@@ -11,45 +11,6 @@ import discord
 from notion_client import Client
 from notion_client.errors import APIResponseError
 
-class NotionDB():
-    def __init__(self) -> None:
-        # Notion setup
-        self.NOTION_API_KEY = os.environ['NOTION_API_KEY']
-        self.NOTION_DATABASE_ID = os.environ['NOTION_DATABASE_ID']
-        self.NOTION_API_URL = "https://api.notion.com/v1/pages"
-
-        self.notion = Client(auth=os.environ["NOTION_API_KEY"])
-
-    # payload の末尾にコンテンツを追加する
-    def add_child(self, payload: dict, child: dict) -> dict:
-        if 'children' not in payload:
-            payload['children'] = []
-        payload['children'].append(child)
-        return payload
-
-    def default(self, title: str, emoji='') -> dict:
-        payload = {
-            "parent": {"database_id": self.NOTION_DATABASE_ID},
-            "icon": {"emoji": emoji},
-            "properties": {
-                "Name": {
-                    "title": [
-                        {
-                            "text": {"content": f"{title}"},
-                        }
-                    ]
-                }
-            },
-            "children": []
-        }
-        return payload
-
-    def query(self, filter):
-        results = self.notion.databases.query(
-            database_id=self.NOTION_DATABASE_ID,
-            filter=filter
-        )
-        return results
 
 class NotionManager(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -57,7 +18,7 @@ class NotionManager(commands.Cog):
         
     @commands.Cog.listener()
     async def on_ready(self):
-        self.notion_db = NotionDB()
+        # self.d = NotionDB()
 
         # Notion setup
         self.NOTION_API_KEY = os.environ['NOTION_API_KEY']
@@ -147,7 +108,14 @@ class NotionManager(commands.Cog):
                 }
             ]
         }
-        result = self.notion_db.query(filter=filter)
+
+        #   def query(self, filter):
+        result = self.notion.databases.query(
+            database_id=self.NOTION_DATABASE_ID,
+            filter=filter
+        )
+        # return results
+        # result = self.notion_db.query(filter=filter)
         pprint(result)
 
 
@@ -159,8 +127,6 @@ class NotionManager(commands.Cog):
             print(data)
             self.post_inbox(data['from'] + ': ' + data['subject'], emoji='📧', content=data['url'], url=data['url'])
             await message.add_reaction('\U0001f44d')
-        else:
-            print('bad')
 
 
 async def setup(bot: commands.Bot) -> None:

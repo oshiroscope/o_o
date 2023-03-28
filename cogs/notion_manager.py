@@ -97,7 +97,7 @@ class NotionManager(commands.Cog):
         if result == "page":
             page_url = result_dict["url"]
             page_title = result_dict["properties"]["Name"]["title"][0]["text"]["content"]
-            message = "「" + page_title + "」が作成されたよ～ XXXX!!\n " + page_url
+            message = "「" + page_title + "」が作成されたよ～!!\n " + page_url
         elif result == "error":
             message = "なんかエラーが発生しているみたい！\n " + page_url
         else:

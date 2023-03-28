@@ -33,6 +33,7 @@ class NotionDB():
             print(f'Exception: {e}')
         return response
 
+    # payload の末尾にコンテンツを追加する
     def add_child(self, payload: dict, child: dict) -> dict:
         if 'children' not in payload:
             payload['children'] = []
@@ -56,6 +57,7 @@ class NotionDB():
         }
         return payload
 
+    # プロジェクトプロパティを編集
     def set_project(self, payload: dict, id: str) -> dict:
         payload['properties']['Project'] = {
             'relation': [

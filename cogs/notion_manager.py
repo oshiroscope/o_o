@@ -1,9 +1,15 @@
-from discord import app_commands
-from discord.ext import commands
-import discord
 import os
 import requests
 import json
+from pprint import pprint
+from datetime import datetime, timezone
+
+from discord import app_commands
+from discord.ext import commands
+import discord
+
+from notion_client import Client
+from notion_client.errors import APIResponseError
 
 class NotionDB():
     def __init__(self) -> None:

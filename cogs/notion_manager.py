@@ -68,19 +68,7 @@ class NotionManager(commands.Cog):
         url = f"https://discord.com/channels/{channel.guild.id}/{channel.id}/{interaction_id}"
         message = self.post_inbox(title, url=url)
         await interaction.response.send_message("hogehoge!")
-
-    @app_commands.command()
-    async def get_db(self, interaction: discord.Interaction) -> None:
-        # url = f"https://api.notion.com/v1/databases/{self.NOTION_DATABASE_ID}"
-        url = f"https://api.notion.com/v1/pages/c43646892163466ebfba427cd7225c1d"
-        headers = {
-            'Authorization': 'Bearer ' + self.NOTION_API_KEY,
-            "Notion-Version": "2022-06-28",
-        }
-        r = requests.get(url, headers=headers)
-        data = r.json()
-        print(data)
-
+        
     @app_commands.command()
     async def daily_report(self, interaction: discord.Interaction) -> None:
         # 現在日時を取得

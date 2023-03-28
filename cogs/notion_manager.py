@@ -68,23 +68,27 @@ class NotionManager(commands.Cog):
         # Discord setup
         self.DISCORD_INBOX_CHANNEL = self.bot.get_channel(int(os.environ['DISCORD_INBOX_CHANNEL_ID']))
 
-    # プロジェクトプロパティを編集
-    def set_project(self, payload: dict, id: str) -> dict:
-        payload['properties']['Project'] = {
-            'relation': [
-                {
-                    'id': id
-                }
-            ],
-            'has_more': False
-        }
-        return payload
-
     def post_inbox(self, title: str, content='', url='', emoji='😐') -> str:
-        payload = self.notion_db.default(title, emoji=emoji)
-        payload = self.set_project(payload, os.environ['NOTION_INBOX_PROJECTS_TAG_IT'])
-        payload = self.notion_db.add_child(payload,
-        {
+        properties = {
+                # page title
+                "Name": {
+                    "title": [
+                        {
+                            "text": {"content": f"{title}"},
+                        }
+                    ]
+                },
+                # Project は Tag it!
+                "Project": {
+                    "relation": [
+                        {
+                            "id": os.environ['NOTION_INBOX_PROJECTS_TAG_IT']
+                        }
+                    ],
+                    "has_more": False
+                }
+            }
+        child = {
             "object": 'block',
             "type": "bookmark",
             "bookmark": 
@@ -92,9 +96,7 @@ class NotionManager(commands.Cog):
                 "url": url
             }
         }
-        )
-        created_page = self.notion.pages.create(parent={"database_id": self.NOTION_DATABASE_ID}, properties=payload["properties"])
-        print(created_page)
+        created_page = self.notion.pages.create(parent={"database_id": self.NOTION_DATABASE_ID}, properties=properties, children=[child])
         return created_page
 
 

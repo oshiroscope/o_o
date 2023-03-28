@@ -18,6 +18,8 @@ class NotionDB():
         self.NOTION_DATABASE_ID = os.environ['NOTION_DATABASE_ID']
         self.NOTION_API_URL = "https://api.notion.com/v1/pages"
 
+        self.notion = Client(auth=os.environ["NOTION_API_KEY"])
+
     def post(self, payload) -> requests.Response:
         headers = {
             "Accept": "application/json",
@@ -64,6 +66,13 @@ class NotionDB():
             'has_more': False
         }
         return payload
+
+    def query(self, filter):
+        results = self.notion.databases.query(
+            database_id=self.NOTION_DATABASE_ID,
+            filter=filter
+        )
+        return results
 
 class NotionManager(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -130,6 +139,38 @@ class NotionManager(commands.Cog):
         r = requests.get(url, headers=headers)
         data = r.json()
         print(data)
+
+    @app_commands.command()
+    async def daily_report(self, interaction: discord.Interaction) -> None:
+        # 現在日時を取得
+        now = datetime.now(timezone.utc)
+
+        # 今日の日付を文字列に変換して取得
+        today = now.strftime('%Y-%m-%d')
+
+        # データベースのIDを取得する
+        database_id = os.environ["NOTION_DATABASE_ID"]
+
+        filter = {
+            "and": [
+                {
+                    "property": "Document type",
+                    "select": {
+                        "equals": "Daily report"
+                    }
+                },
+                {
+                    "property": "Created",
+                    "created_time": {
+                        "on_or_after": today
+                    }
+                }
+            ]
+        }
+        result = self.notion_db.query(filter=filter)
+        pprint(result)
+
+
 
     @commands.Cog.listener(name='on_message')
     async def good_reaction(self, message: discord.Message):

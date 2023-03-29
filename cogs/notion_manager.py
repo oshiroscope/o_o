@@ -144,7 +144,6 @@ class NotionManager(commands.Cog):
                     children_text = ""
                     for block in children:
                         block_type = block["type"]
-                        print(block)
                         if block_type == "paragraph" and block["paragraph"]["rich_text"] != []: 
                             children_text = block["paragraph"]["rich_text"][0]["plain_text"] + "\n"
                         elif block_type == "heading_1" and block["heading_1"]["rich_text"] != []:
@@ -169,7 +168,8 @@ class NotionManager(commands.Cog):
                         elif block_type == "quote" and block['quote']['rich_text'] != []:
                             children_text = f"> {block['quote']['rich_text'][0]['plain_text']}\n"
                         elif block_type == "code" and block['code']['rich_text'] != []:
-                            children_text = f"```{block['code']['language']}\n{block['code']['rich_text']}```\n"
+                            print(block)
+                            children_text = f"```{block['code']['language']}\n{block['code']['rich_text'][0]['text']['content']}```\n"
                         elif block_type == "embed":
                             children_text = f"{block['embed']['embed_url']}\n"
                         else:

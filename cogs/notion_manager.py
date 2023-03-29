@@ -81,7 +81,7 @@ class NotionManager(commands.Cog):
         # データベースのIDを取得する
         database_id = os.environ["NOTION_DATABASE_ID"]
 
-        filter = {
+        filter_daily_report = {
             "and": [
                 {
                     "property": "Document type",
@@ -100,12 +100,12 @@ class NotionManager(commands.Cog):
 
         result = self.notion.databases.query(
             database_id=self.NOTION_DATABASE_ID,
-            filter=filter
+            filter=filter_daily_report
         )
         if 'results' in result:
             for r in result['results']:
                 author = r['properties']['Created by']['created_by']['name']
-                print(r['properties']['Created by']['created_by']['name'])
+                author_id = r['properties']['Created by']['created_by']['id']
                 page_id = r['id']
 
                 # ページの情報を取得する関数
@@ -123,7 +123,6 @@ class NotionManager(commands.Cog):
                 def block_to_embed(block):
                     # ブロックがテキストの場合
                     if block['type'] == "paragraph":
-                        print(block['paragraph']['rich_text'])
                         text = block['paragraph']['rich_text'][0]['plain_text']
                         return discord.Embed(description=text)
                     # ブロックが画像の場合
@@ -168,7 +167,6 @@ class NotionManager(commands.Cog):
                         elif block_type == "quote" and block['quote']['rich_text'] != []:
                             children_text = f"> {block['quote']['rich_text'][0]['plain_text']}\n"
                         elif block_type == "code" and block['code']['rich_text'] != []:
-                            print(block)
                             children_text = f"```{block['code']['language']}\n{block['code']['rich_text'][0]['text']['content']}```\n"
                         elif block_type == "embed":
                             children_text = f"{block['embed']['embed_url']}\n"
@@ -183,8 +181,66 @@ class NotionManager(commands.Cog):
                 
                 # NotionページをDiscord Embedに変換
                 embed = page_to_embed(r)
+
                 # Discordに投稿
                 await channel.send(content=f"今日の {author} の日誌だよ！",embed=embed)
+                
+                today = datetime.now().date()
+                filter_task = {
+                    "and": [
+                        {
+                            "or": [
+                                {
+                                    "property": "GTD",
+                                    "select": {
+                                        "equals": "💪 Next actions"
+                                    }
+                                },
+                                {
+                                    "property": "GTD",
+                                    "select": {
+                                        "equals": "🔥 Do it!"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "property": "Person",
+                            "people": {
+                                "contains": author_id
+                            }
+                        },
+                        {
+                            "property": "Done?",
+                            "checkbox": {
+                                "equals": True
+                            }
+                        },
+                        {
+                            "property": "Last edited time",
+                            "date": {
+                                "on_or_after": today.isoformat()
+                            }
+                        },
+                    ]
+                }
+                
+                done = self.notion.databases.query(
+                    database_id=self.NOTION_DATABASE_ID,
+                    filter=filter_task
+                )
+                embed = discord.Embed(title="お疲れ～")
+                text = ''
+                for page in done["results"]:
+                    # icon = page['icon']['emoji']
+                    project = self.notion.pages.retrieve(page['properties']['Project']['relation'][0]['id'])
+                    project_title = project['properties']['Name']['title'][0]['text']['content']
+                    text += f"{project_title} : {page['properties']['Name']['title'][0]['text']['content']}\n"
+                    
+                embed.add_field(name='', value=text)
+                await channel.send(content=f"今日 {author} が終わらせたタスクだよ！",embed=embed)
+
+
 
     @commands.Cog.listener(name='on_message')
     async def good_reaction(self, message: discord.Message):

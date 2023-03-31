@@ -66,7 +66,7 @@ class NotionManager(commands.Cog):
         interaction_id = interaction.id
         url = f"https://discord.com/channels/{channel.guild.id}/{channel.id}/{interaction_id}"
         new_page = self.post_inbox(title, url=url)
-        await interaction.response.send_message("hogehoge!")
+        await interaction.response.send_message(f"{title} をつくったよ！ {new_page['url']}")
 
     @app_commands.command()
     async def daily_report(self, interaction: discord.Interaction) -> None:

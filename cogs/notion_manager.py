@@ -129,7 +129,7 @@ class NotionManager(commands.Cog):
                 #     elif block['type'] == "embed":
                 #         return discord.Embed().set_image(url=block['embed']['url'])
     
-                def block_to_text(block, gen=0):
+                def block_to_text(block, bul_gen=0, num_gen=0):
                     type = block["type"]
                     text = ''
 
@@ -146,39 +146,15 @@ class NotionManager(commands.Cog):
                             text = '**' + text + '**'
                         elif type == 'heading_3':
                             text = '__' + text + '__'
-                        elif type == 'bulleted_list_item':
-                            text = '-' * (gen + 1) + ' ' + text + '\n'
+                        elif type in ['bulleted_list_item', 'numbered_list_item'] :
+                            text = '-' * (bul_gen + 1) + ' ' + text + '\n'
                             if block['has_children']:
                                 children = self.notion.blocks.children.list(block_id=block['id'])
                                 for child in children['results']:
-                                    text += block_to_text(child, gen=gen+1)    
-
+                                    text += block_to_text(child, bul_gen=bul_gen+1)
                         
-                        # elif type == 'heading_1':
-                        #     text = '**' + text
-                        # elif type == 'heading_1':
-                        #     text = '**' + text
-                        # elif type == 'heading_1':
-                        #     text = '**' + text
-
                     return text
-                    # if type == "paragraph" and block["paragraph"]["rich_text"] != []: 
-                    #     children_text = block["paragraph"]["rich_text"][0]["plain_text"] + "\n"
-                    # elif type == "heading_1" and block["heading_1"]["rich_text"] != []:
-                    #     children_text = f"**{block['heading_1']['rich_text'][0]['plain_text']}**\n"
-                    # elif type == "heading_2" and block["heading_2"]["rich_text"] != []:
-                    #     children_text = f"__{block['heading_2']['rich_text'][0]['plain_text']}__\n"
-                    # elif type == "heading_3" and block['heading_3']['rich_text'] != []:
-                    #     children_text = f"{block['heading_3']['rich_text'][0]['plain_text']}\n"
-                    # elif type == "bulleted_list_item" and block['bulleted_list_item']['rich_text'] != []:
-                    #     children_text = f"- {block['bulleted_list_item']['rich_text'][0]['plain_text']}\n"
-                    #     # print(block)
-                    #     # print(block['bulleted_list_item'])
-                    #     if block['has_children']:
-                    #         children = self.notion.blocks.children.list(block['id'])
-                    #         print(children)
-                    # elif type == "numbered_list_item" and block['numbered_list_item']['rich_text'] != []:
-                    #     children_text = f"{block['numbered_list_item']['rich_text'][0]['plain_text']}\n"
+                    
                     # elif type == "to_do" and block['to_do']['rich_text'] != []:
                     #     status = block['to_do']['checked']
                     #     text = block['to_do']['rich_text'][0]['plain_text']

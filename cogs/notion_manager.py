@@ -186,7 +186,8 @@ class NotionManager(commands.Cog):
                 
                 # NotionページをDiscord Embedに変換
                 embed = page_to_embed(r)
-
+                embed.url = r['url']
+                
                 # Discordに投稿
                 await channel.send(content=f"今日の {author} の日誌だよ！",embed=embed)
                 

@@ -129,7 +129,7 @@ class NotionManager(commands.Cog):
                 #     elif block['type'] == "embed":
                 #         return discord.Embed().set_image(url=block['embed']['url'])
     
-                def block_to_text(block, bul_gen=0, num_gen=0):
+                def block_to_text(block, prefix=''):
                     type = block["type"]
                     text = ''
 
@@ -147,31 +147,25 @@ class NotionManager(commands.Cog):
                         elif type == 'heading_3':
                             text = '__' + text + '__'
                         elif type in ['bulleted_list_item', 'numbered_list_item'] :
-                            text = '-' * (bul_gen + 1) + ' ' + text + '\n'
-                            if block['has_children']:
+                            text = '- ' + text    
+                        elif type == 'to_do':
+                            status = block['to_do']['checked']
+                            if status:
+                                text = f"[x] {text}"
+                            else:
+                                text = f"[ ] {text}"
+                        elif type == 'toggle':
+                            text = '> ' + text
+                        elif type == 'quote':
+                            text = '> ' + text
+                        elif type == 'code':
+                            text = f"```{block['code']['language']}\n{block['code']['rich_text'][0]['text']['content']}```\n"
+                        if block['has_children']:
                                 children = self.notion.blocks.children.list(block_id=block['id'])
                                 for child in children['results']:
-                                    text += block_to_text(child, bul_gen=bul_gen+1)
-                        
-                    return text
-                    
-                    # elif type == "to_do" and block['to_do']['rich_text'] != []:
-                    #     status = block['to_do']['checked']
-                    #     text = block['to_do']['rich_text'][0]['plain_text']
-                    #     if status:
-                    #         children_text = f"[x] {text}\n"
-                    #     else:
-                    #         children_text = f"[ ] {text}\n"
-                    # elif type == "toggle" and block['toggle']['rich_text'] != []:
-                    #     children_text = f"> {block['toggle']['rich_text'][0]['plain_text']}\n"
-                    # elif type == "quote" and block['quote']['rich_text'] != []:
-                    #     children_text = f"> {block['quote']['rich_text'][0]['plain_text']}\n"
-                    # elif type == "code" and block['code']['rich_text'] != []:
-                    #     children_text = f"```{block['code']['language']}\n{block['code']['rich_text'][0]['text']['content']}```\n"
-                    # elif type == "embed":
-                    #     children_text = f"{block['embed']['url']}\n"
-                    # else:
-                    #     children_text = "\n"
+                                    text += '\n' + block_to_text(child, prefix=prefix+'　') # Zenkaku space character
+
+                    return prefix + text
                     
 
                 # NotionページをDiscord Embedに変換する関数
@@ -181,52 +175,13 @@ class NotionManager(commands.Cog):
                     # Embedオブジェクトを作成
                     embed = discord.Embed(title=title)
                     
-                    # ページの子ブロックをEmbedに追加
-                    # for child in children:
-                    #     embed.add_field(name='', value=block_to_embed(child), inline=False)
                     # 子ブロックを文字列に変換
                     children_text = ""
                     for block in children:
-                        # block_type = block["type"]
-                        # if block_type == "paragraph" and block["paragraph"]["rich_text"] != []: 
-                        #     children_text = block["paragraph"]["rich_text"][0]["plain_text"] + "\n"
-                        # elif block_type == "heading_1" and block["heading_1"]["rich_text"] != []:
-                        #     children_text = f"**{block['heading_1']['rich_text'][0]['plain_text']}**\n"
-                        # elif block_type == "heading_2" and block["heading_2"]["rich_text"] != []:
-                        #     children_text = f"__{block['heading_2']['rich_text'][0]['plain_text']}__\n"
-                        # elif block_type == "heading_3" and block['heading_3']['rich_text'] != []:
-                        #     children_text = f"{block['heading_3']['rich_text'][0]['plain_text']}\n"
-                        # elif block_type == "bulleted_list_item" and block['bulleted_list_item']['rich_text'] != []:
-                        #     children_text = f"- {block['bulleted_list_item']['rich_text'][0]['plain_text']}\n"
-                        #     # print(block)
-                        #     # print(block['bulleted_list_item'])
-                        #     if block['has_children']:
-                        #         children = self.notion.blocks.children.list(block['id'])
-                        #         print(children)
-                        # elif block_type == "numbered_list_item" and block['numbered_list_item']['rich_text'] != []:
-                        #     children_text = f"{block['numbered_list_item']['rich_text'][0]['plain_text']}\n"
-                        # elif block_type == "to_do" and block['to_do']['rich_text'] != []:
-                        #     status = block['to_do']['checked']
-                        #     text = block['to_do']['rich_text'][0]['plain_text']
-                        #     if status:
-                        #         children_text = f"[x] {text}\n"
-                        #     else:
-                        #         children_text = f"[ ] {text}\n"
-                        # elif block_type == "toggle" and block['toggle']['rich_text'] != []:
-                        #     children_text = f"> {block['toggle']['rich_text'][0]['plain_text']}\n"
-                        # elif block_type == "quote" and block['quote']['rich_text'] != []:
-                        #     children_text = f"> {block['quote']['rich_text'][0]['plain_text']}\n"
-                        # elif block_type == "code" and block['code']['rich_text'] != []:
-                        #     children_text = f"```{block['code']['language']}\n{block['code']['rich_text'][0]['text']['content']}```\n"
-                        # elif block_type == "embed":
-                        #     children_text = f"{block['embed']['url']}\n"
-                        # else:
-                        #     children_text = "\n"
                         children_text = block_to_text(block)
                         if len(children_text) >= 1000:
                             children_text = children_text[:1000] + "..."
                         embed.add_field(name='', value=children_text, inline=False)
-                    # embed.add_field(name="Content", value=children_text, inline=False)
                     return embed
                 
                 # NotionページをDiscord Embedに変換

@@ -169,7 +169,8 @@ class NotionManager(commands.Cog):
                         elif block_type == "code" and block['code']['rich_text'] != []:
                             children_text = f"```{block['code']['language']}\n{block['code']['rich_text'][0]['text']['content']}```\n"
                         elif block_type == "embed":
-                            children_text = f"{block['embed']['embed_url']}\n"
+                            print(block['embed'])
+                            children_text = f"{block['embed']['url']}\n"
                         else:
                             children_text = "\n"
 

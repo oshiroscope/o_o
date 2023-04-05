@@ -239,10 +239,13 @@ class NotionManager(commands.Cog):
                 text = ''
                 for page in done["results"]:
                     # icon = page['icon']['emoji']
-                    project = self.notion.pages.retrieve(page['properties']['Project']['relation'][0]['id'])
-                    project_title = project['properties']['Name']['title'][0]['text']['content']
-                    text += f"{project_title} : {page['properties']['Name']['title'][0]['text']['content']}\n"
-                    
+                    project_title = ''
+                    if page['properties']['Project']['relation'] != []:
+                        project = self.notion.pages.retrieve(page['properties']['Project']['relation'][0]['id'])
+                        project_title = project['properties']['Name']['title'][0]['text']['content'] + ' :: '
+                        
+                    text += project_title + page['properties']['Name']['title'][0]['text']['content'] + '\n'
+
                 embed.add_field(name='', value=text)
                 await channel.send(content=f"今日 {author} が終わらせたタスクだよ！",embed=embed)
 

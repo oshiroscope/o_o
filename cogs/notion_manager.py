@@ -11,6 +11,30 @@ import discord
 from notion_client import Client
 from notion_client.errors import APIResponseError
 
+from typing import Literal
+
+projects = []
+notion = Client(auth=os.environ["NOTION_API_KEY"])
+
+projects_database_id = os.environ["NOTION_PROJECTS_DATABASE_ID"]
+
+filter_projects = {
+    "property": "Status",
+    "status": {
+        "equals": "Ongoing"
+    }
+}
+
+result = notion.databases.query(
+    database_id=projects_database_id,
+    filter=filter_projects
+)
+
+if 'results' in result:
+    for r in result['results']:
+        title = r['properties']["Name"]['title'][0]['text']['content']
+        id = r['id']
+        projects.append(discord.app_commands.Choice(name=title, value=id))
 
 class NotionManager(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -24,12 +48,19 @@ class NotionManager(commands.Cog):
         self.NOTION_API_KEY = os.environ['NOTION_API_KEY']
         self.NOTION_DATABASE_ID = os.environ['NOTION_DATABASE_ID']
         self.NOTION_API_URL = "https://api.notion.com/v1/pages"
-        self.notion = Client(auth=os.environ["NOTION_API_KEY"])
+        # self.notion = Client(auth=os.environ["NOTION_API_KEY"])
+        self.notion = notion 
 
         # Discord setup
         self.DISCORD_INBOX_CHANNEL = self.bot.get_channel(int(os.environ['DISCORD_INBOX_CHANNEL_ID']))
 
-    def post_inbox(self, title: str, content='', url='', emoji='😐') -> str:
+        self.projects = Literal['project A', 'project B']
+
+    def post_inbox(self, title: str, content='', url='', emoji='😐', project_id='') -> str:
+        _project_id = project_id
+        if _project_id == None:
+            _project_id = os.environ['NOTION_INBOX_PROJECTS_TAG_IT']
+        
         properties = {
             # page title
             "Name": {
@@ -43,7 +74,7 @@ class NotionManager(commands.Cog):
             "Project": {
                 "relation": [
                     {
-                        "id": os.environ['NOTION_INBOX_PROJECTS_TAG_IT']
+                        "id": _project_id
                     }
                 ],
                 "has_more": False
@@ -61,11 +92,12 @@ class NotionManager(commands.Cog):
         return created_page
 
     @app_commands.command()
-    async def inbox(self, interaction: discord.Interaction, title: str) -> None:
+    @app_commands.choices(project_id = projects)
+    async def inbox(self, interaction: discord.Interaction, title: str, project_id: str = None) -> None:
         channel = interaction.channel
         interaction_id = interaction.id
         url = f"https://discord.com/channels/{channel.guild.id}/{channel.id}/{interaction_id}"
-        new_page = self.post_inbox(title, url=url)
+        new_page = self.post_inbox(title, url=url, project_id=project_id)
         await interaction.response.send_message(f"{title} をつくったよ！ {new_page['url']}")
 
     @app_commands.command()

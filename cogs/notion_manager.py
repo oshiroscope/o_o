@@ -2,7 +2,8 @@ import os
 import requests
 import json
 from pprint import pprint
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 
 from discord import app_commands
 from discord.ext import commands
@@ -54,8 +55,6 @@ class NotionManager(commands.Cog):
         # Discord setup
         self.DISCORD_INBOX_CHANNEL = self.bot.get_channel(int(os.environ['DISCORD_INBOX_CHANNEL_ID']))
 
-        self.projects = Literal['project A', 'project B']
-
     def post_inbox(self, title: str, content='', url='', emoji='😐', project_id='') -> str:
         _project_id = project_id
         if _project_id == None:
@@ -104,11 +103,14 @@ class NotionManager(commands.Cog):
     async def daily_report(self, interaction: discord.Interaction) -> None:
         channel = interaction.channel
 
-        # 現在日時を取得
-        now = datetime.now(timezone.utc)
+        # JST タイムゾーンを設定
+        JST = timezone(timedelta(hours=9))
 
-        # 今日の日付を文字列に変換して取得
-        today = now.strftime('%Y-%m-%d')
+        # JST タイムゾーンで今日の日付を取得
+        today = datetime.now(JST).date()
+
+        # 今日のタイムスタンプをISOフォーマットに変換
+        today_iso = today.isoformat()
 
         # データベースのIDを取得する
         database_id = os.environ["NOTION_DATABASE_ID"]
@@ -124,7 +126,7 @@ class NotionManager(commands.Cog):
                 {
                     "property": "Created",
                     "created_time": {
-                        "on_or_after": today
+                        "on_or_after": today_iso + "T00:00:00+09:00"
                     }
                 }
             ]
